@@ -1,0 +1,58 @@
+#!/bin/bash
+#  git源码提交push规范
+
+revert_msg="\033[31m [ERROR] \033[0m本次git push被撤回"
+
+# 输出帮助信息
+printHelpfulInfo() {
+    echo -e "\033[36m [INFO] \033[0m更多帮助可参考 \033[36m$1\033[0m"
+}
+
+# 校验commit信息
+check_commit() {
+    # check commit message
+    commit_msg="$(git log -1 --pretty=format:%s $1)"
+    if [[ ${#commit_msg} < 5 ]]; then
+        echo -e "\033[31m [ERROR] \033[0mCommit Message 存在长度过短的信息 \"\033[31m$commit_msg\033[0m\" ，请更换为更有意义的Commit信息"
+        echo -e $revert_msg
+        printHelpfulInfo https://git-scm.com/book/zh/v1/Git-%E5%B7%A5%E5%85%B7-%E9%87%8D%E5%86%99%E5%8E%86%E5%8F%B2
+        exit 1
+    fi
+
+    # check Email
+    commit_email="$(git log -1 --pretty=format:%ae $1)"
+    email_affix="$(echo $commit_email | cut -d @ -f 2)"
+
+    if [[ "$email_affix" != "xxx.com" ]]; then
+        echo -e "\033[31m [ERROR] \033[0m发现有非xxx公司邮箱提交的Commit:\033[31m $commit_email \033[0m! 请先修改Commit作者信息"
+        echo -e $revert_msg
+        printHelpfulInfo https://git-scm.com/book/zh/v1/Git-%E5%B7%A5%E5%85%B7-%E9%87%8D%E5%86%99%E5%8E%86%E5%8F%B2
+        exit 1
+    fi
+
+}
+
+NULL_SHA1="0000000000000000000000000000000000000000" # 40 个
+new_list=
+any_deleted=false
+while read oldsha newsha refname; do
+   case $oldsha,$newsha in
+   *,$NULL_SHA1) # delete
+       any_deleted=true;;
+   $NULL_SHA1,*) # create
+       new_list="$new_list $newsha";;
+   *,*) # update
+       new_list="$new_list $newsha";;
+   esac
+done
+
+echo '$new_list: '$new_list
+git rev-list $new_list --not --all |
+while read sha1; do
+    objtype=$(git cat-file -t $sha1)
+    echo '$objtype'":  $objtype"
+    echo '$sha1: '$sha1
+    case $objtype in
+    commit) check_commit $sha1;;
+    esac
+done
