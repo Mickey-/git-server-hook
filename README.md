@@ -1,2 +1,2 @@
-# git-server-hook
-there are some git server hook to deal with git push
+# git-server-hooks
+there are some git server hooks to deal with git push
