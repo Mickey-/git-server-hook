@@ -1,0 +1,29 @@
+#!/usr/bin/env python
+
+import sys, os, shutil
+
+# xxx.git
+bareRepo = os.path.basename(os.getcwd())
+# xxx_deploy
+deployRepo = bareRepo[0:-4] + '_deploy'
+
+print 'Hello, ' + deployRepo
+os.chdir('../')
+shutil.rmtree(deployRepo)
+if not os.path.exists(deployRepo):
+    os.mkdir(deployRepo)
+    # TODO 改造为sparse clone
+    os.system('git clone ' + bareRepo)
+
+os.system('cd ' + deployRepo + ' && ls -a')
+os.listdir(deployRepo)
+#os.system('cd ../' + deployRepo + ' && git checkout develop && git pull origin develop && ls')
+print 'Hello, ' + os.getcwd()
+#   pwd
+#   git show
+#   cd ../
+#   if [ ! -d "/myfolder" ]; then
+#       mkdir /myfolder
+#   fi
+#   ls
+#   git pull origin develope
