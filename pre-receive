@@ -1,5 +1,5 @@
-#!/bin/bash
-#  git源码提交push规范
+!/bin/bash
+# git源码提交push规范
 
 revert_msg="\033[31m [ERROR] \033[0m本次git push被撤回"
 
@@ -12,8 +12,9 @@ printHelpfulInfo() {
 check_commit() {
     # check commit message
     commit_msg="$(git log -1 --pretty=format:%s $1)"
-    if [[ ${#commit_msg} < 5 ]]; then
-        echo -e "\033[31m [ERROR] \033[0mCommit Message 存在长度过短的信息 \"\033[31m$commit_msg\033[0m\" ，请更换为更有意义的Commit信息"
+    # 这里不能用${#commit_msg} < 5,要用严格的-lt运算符
+    if [[ ${#commit_msg} -lt 5 ]]; then
+        echo -e "\033[31m [ERROR] \033[0m存在长度过短的Commit信息 \"\033[31m$commit_msg\033[0m\" ，请>改为更有工程参考意义的Commit信息"
         echo -e $revert_msg
         printHelpfulInfo https://git-scm.com/book/zh/v1/Git-%E5%B7%A5%E5%85%B7-%E9%87%8D%E5%86%99%E5%8E%86%E5%8F%B2
         exit 1
@@ -23,8 +24,8 @@ check_commit() {
     commit_email="$(git log -1 --pretty=format:%ae $1)"
     email_affix="$(echo $commit_email | cut -d @ -f 2)"
 
-    if [[ "$email_affix" != "xxx.com" ]]; then
-        echo -e "\033[31m [ERROR] \033[0m发现有非xxx公司邮箱提交的Commit:\033[31m $commit_email \033[0m! 请先修改Commit作者信息"
+    if [[ "$email_affix" != "59store.com" ]]; then
+        echo -e "\033[31m [ERROR] \033[0m发现有非59store公司邮箱提交的Commit:\033[31m $commit_email \033[0m! 请先修改Commit作者信息"
         echo -e $revert_msg
         printHelpfulInfo https://git-scm.com/book/zh/v1/Git-%E5%B7%A5%E5%85%B7-%E9%87%8D%E5%86%99%E5%8E%86%E5%8F%B2
         exit 1
@@ -46,12 +47,9 @@ while read oldsha newsha refname; do
    esac
 done
 
-echo '$new_list: '$new_list
 git rev-list $new_list --not --all |
 while read sha1; do
     objtype=$(git cat-file -t $sha1)
-    echo '$objtype'":  $objtype"
-    echo '$sha1: '$sha1
     case $objtype in
     commit) check_commit $sha1;;
     esac
