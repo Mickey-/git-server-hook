@@ -1,5 +1,5 @@
-!/bin/bash
-# git源码提交push规范
+#!/bin/bash
+# 59store git源码提交push规范
 
 revert_msg="\033[31m [ERROR] \033[0m本次git push被撤回"
 
@@ -33,19 +33,39 @@ check_commit() {
 
 }
 
+# eslint
+lintit() {
+    OUTPUT=$(git diff $1 $2 --name-only | grep -E '(.js)$')
+    a=("${OUTPUT}")
+    echo $a
+    e=$(eslint $a)
+    echo $e
+    if [[ "$e" != *"0 problems"* ]]; then
+        echo "ERROR: Check eslint hints."
+        exit 1 # reject
+    fi
+    exit 1
+}
 NULL_SHA1="0000000000000000000000000000000000000000" # 40 个
 new_list=
 any_deleted=false
-while read oldsha newsha refname; do
-   case $oldsha,$newsha in
-   *,$NULL_SHA1) # delete
-       any_deleted=true;;
-   $NULL_SHA1,*) # create
-       new_list="$new_list $newsha";;
-   *,*) # update
-       new_list="$new_list $newsha";;
-   esac
+oldsha=
+newsha=
+while read tmpoldsha tmpnewsha refname; do
+    oldsha=$tmpoldsha
+    newsha=$tmpnewsha
+    case $tmpoldsha,$tmpnewsha in
+    *,$NULL_SHA1) # delete
+        any_deleted=true;;
+    $NULL_SHA1,*) # create
+        new_list="$new_list $newsha";;
+    *,*) # update
+        new_list="$new_list $newsha";;
+    esac
 done
+
+# commit check done
+lintit $oldsha $newsha
 
 git rev-list $new_list --not --all |
 while read sha1; do
@@ -54,3 +74,5 @@ while read sha1; do
     commit) check_commit $sha1;;
     esac
 done
+
+
