@@ -1,0 +1,81 @@
+#!/bin/sh
+#
+# A hook script to block non-fast-forward updates for branches that haven't
+# been explicitly configured to allow it. Based on update.sample.
+# Called by "git receive-pack" with arguments: refname sha1-old sha1-new
+#
+# Config
+# ------
+# hooks.branch.<name>.allownonfastforward
+#   This boolean sets whether non-fast-forward updates will be allowed for
+#   branch <name>. By default they won't be.
+
+# --- Command line
+refname="$1"
+oldrev="$2"
+newrev="$3"
+
+if [ -z "$refname" -o -z "$oldrev" -o -z "$newrev" ]; then
+        echo "Usage: $0 <ref> <oldrev> <newrev>" >&2
+        exit 1
+fi
+revert_msg="\033[31m [ERROR] \033[0m本次git push被撤回"
+
+# 输出帮助信息
+printHelpfulInfo() {
+    echo -e "\033[36m [INFO] \033[0m更多帮助可参考 \033[36m$1\033[0m"
+}
+# --- Check types
+# if $newrev is 0000...0000, it's a commit to delete a ref.
+zero="0000000000000000000000000000000000000000"
+if [ "$newrev" = "$zero" ]; then
+        newrev_type=delete
+else
+        newrev_type=$(git cat-file -t $newrev)
+fi
+
+case "$refname","$newrev_type" in
+        refs/tags/*,commit)
+                # un-annotated tag
+                ;;
+        refs/tags/*,delete)
+                # delete tag
+                ;;
+        refs/tags/*,tag)
+                # annotated tag
+                ;;
+        refs/heads/*,commit)
+                # branch
+                # git rev-list doesn't print anything on fast-forward updates
+                if test $(git rev-list "$newrev".."$oldrev"); then
+                        branch=${refname##refs/heads/}
+                        nonfastforwardallowed=$(git config --bool hooks.branch."$branch".allownonfastforward)
+
+                        if [ "$nonfastforwardallowed" != "true" ] && [ "$branch" = "master" ]; then
+                                echo -e "\033[31m [ERROR] \033[0m禁止在\033[31m master \033[0m分支上进行非快进式(Non-fast-forward)的强制push！ 请使用\033[36m git revert \033[0m替代"
+                                echo -e $revert_msg
+                                printHelpfulInfo https://git-scm.com/docs/git-revert
+                                exit 1
+                        fi
+                fi
+                ;;
+        refs/heads/*,delete)
+                # delete branch
+                ;;
+        refs/remotes/*,commit)
+                # tracking branch
+                ;;
+        refs/remotes/*,delete)
+                # delete tracking branch
+                ;;
+        *)
+                # Anything else (is there anything else?)
+                echo "hooks/update: Unknown type of update to ref $refname of type $newrev_type" >&2
+                exit 1
+                ;;
+esac
+
+# --- Finished
+exit 0
+
+
