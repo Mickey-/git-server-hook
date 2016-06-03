@@ -14,7 +14,7 @@ check_commit() {
     commit_msg="$(git log -1 --pretty=format:%s $1)"
     # 这里不能用${#commit_msg} < 5,要用严格的-lt运算符
     if [[ ${#commit_msg} -lt 5 ]]; then
-        echo -e "\033[31m [ERROR] \033[0m存在长度过短的Commit信息 \"\033[31m$commit_msg\033[0m\" ，请>改为更有工程参考意义的Commit信息"
+        echo -e "\033[31m [ERROR] \033[0m存在长度过短的Commit信息 \"\033[31m$commit_msg\033[0m\" ，请改为更有工程参考意义的Commit信息"
         echo -e $revert_msg
         printHelpfulInfo https://git-scm.com/book/zh/v1/Git-%E5%B7%A5%E5%85%B7-%E9%87%8D%E5%86%99%E5%8E%86%E5%8F%B2
         exit 1
