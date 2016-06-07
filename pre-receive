@@ -27,7 +27,7 @@ check_commit() {
     if [[ "$email_affix" != "59store.com" ]]; then
         echo -e "\033[31m [ERROR] \033[0m发现有非59store公司邮箱提交的Commit:\033[31m $commit_email \033[0m! 请先修改Commit作者信息"
         echo -e $revert_msg
-        printHelpfulInfo https://git-scm.com/book/zh/v1/Git-%E5%B7%A5%E5%85%B7-%E9%87%8D%E5%86%99%E5%8E%86%E5%8F%B2
+        printHelpfulInfo http://stackoverflow.com/questions/3042437/change-commit-author-at-one-specific-commit
         exit 1
     fi
 
